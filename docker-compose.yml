@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: my_database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","localhost","-u","root","-p$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  flask_app:
+    build:
+      context: ./flask_app
+      dockerfile: Dockerfile
+    container_name: flask_app_container
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: laxmi12*
+    networks:
+      - my_network
+    ports:
+      - "5000:5000"
+    restart: always
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mysql_data:
+
+networks:
+  my_network:
